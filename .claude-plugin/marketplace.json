@@ -7,10 +7,7 @@
   "plugins": [
     {
       "name": "bytecodeguru",
-      "source": {
-        "source": "github",
-        "repo": "bytecodeguru/agent-skills"
-      },
+      "source": ".",
       "description": "Personal agent skills by bytecodeguru",
       "version": "0.1.0"
     }
