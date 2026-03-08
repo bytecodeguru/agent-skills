@@ -1,0 +1,11 @@
+{
+  "name": "bytecodeguru",
+  "description": "Personal agent skills by bytecodeguru",
+  "version": "0.1.0",
+  "author": {
+    "name": "Giuseppe Moscarella",
+    "email": "sepmos@gmail.com"
+  },
+  "repository": "https://github.com/sepmos/agent-skills",
+  "license": "MIT"
+}
