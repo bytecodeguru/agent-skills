@@ -73,6 +73,8 @@ Ask the user to review before proceeding to scaffolding.
 
 ## Step 3 — Scaffold Plan
 
+**Enter plan mode** (use the `EnterPlanMode` tool) before producing the scaffold plan. This makes the planning phase explicit and prevents accidental file modifications.
+
 Before touching any files, produce a **detailed scaffold plan** listing:
 
 - Every file and directory to be created
@@ -84,6 +86,8 @@ Before touching any files, produce a **detailed scaffold plan** listing:
 Present this plan to the user for review. Adjust based on feedback.
 
 ## Step 4 — Scaffold
+
+**Exit plan mode** (use the `ExitPlanMode` tool) once the user approves the plan and before creating any files.
 
 Once the plan is approved:
 
