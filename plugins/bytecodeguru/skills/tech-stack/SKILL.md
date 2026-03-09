@@ -95,6 +95,21 @@ The user has approved the plan. Create all files as planned.
 4. **Inform the user** that finalization will optionally create a git commit. Let them choose.
 5. If the user opts for a commit, stage all new files and commit.
 
+## Step 5 — Simplify
+
+After the scaffold is working (install + lint + test pass), run `/simplify` to review the scaffolded code for reuse opportunities, quality issues, and unnecessary complexity. Fix any issues found before proceeding.
+
+## Step 6 — Post-Scaffold Review
+
+After simplification, review what you learned during implementation:
+
+- **Implicit dependencies**: packages not mentioned in the tech stack but required at runtime (e.g., Node.js server adapters, polyfills, CSS toolchain plugins)
+- **Configuration quirks**: non-obvious settings required by the package manager, build tool, or runtime (e.g., build script whitelists, plugin registration order)
+- **Testability patterns**: architectural choices made for testability (e.g., separating app definition from server startup) that affect how new code should be structured
+- **Version-specific behavior**: if a major version of a tool changed its API or conventions from what's commonly documented (e.g., Tailwind v4 directives differ from v3)
+
+Update `docs/tech-stack.md` with any findings that would be useful for someone (human or agent) working on the project. Keep updates concise and integrated into the existing sections — don't create a separate "scaffold notes" section.
+
 ## Language
 
 Follow the user's language. If unclear, default to English. Write all documents in the same language as the conversation.
