@@ -71,11 +71,11 @@ Write `docs/tech-stack.md` with the agreed stack. The document should include:
 
 Ask the user to review before proceeding to scaffolding.
 
-## Step 3 — Scaffold Plan
+## Step 3 — Scaffold Plan (plan mode)
 
-**Enter plan mode** (use the `EnterPlanMode` tool) before producing the scaffold plan. This makes the planning phase explicit and prevents accidental file modifications.
+**Enter plan mode** (use the `EnterPlanMode` tool). The scaffold plan IS the plan — the user reviews it and approves it naturally via the plan mode "apply" flow.
 
-Before touching any files, produce a **detailed scaffold plan** listing:
+Produce a **detailed scaffold plan** listing:
 
 - Every file and directory to be created
 - What each config file will contain (summarized, not full content)
@@ -83,15 +83,11 @@ Before touching any files, produce a **detailed scaffold plan** listing:
 - Git hooks to be installed
 - Commands the user will use to run lint, test, build, and (if applicable) start the app
 
-Present this plan to the user for review. Adjust based on feedback.
+Iterate with the user in plan mode until the plan is approved. When the user approves (applies the plan), proceed to Step 4.
 
-## Step 4 — Scaffold
+## Step 4 — Scaffold (apply)
 
-**Exit plan mode** (use the `ExitPlanMode` tool) once the user approves the plan and before creating any files.
-
-Once the plan is approved:
-
-1. Create all directories and files as planned.
+The user has approved the plan. Create all files as planned.
 2. Ensure everything works: the project should be in a state where `install → lint → test → build` succeeds with zero errors (even if there's no real code yet — use placeholder tests or hello-world entry points as needed).
 3. **Handle `AGENTS.md`**:
    - If it **does not exist**: create it with the standard header (`<!-- CLAUDE.md e GEMINI.md sono symlink a questo file (AGENTS.md) -->`) and a section referencing `docs/tech-stack.md` for tech stack details and development workflow. Create `CLAUDE.md` and `GEMINI.md` as symlinks to `AGENTS.md`.
