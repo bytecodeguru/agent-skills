@@ -23,7 +23,8 @@ These are patterns that feel productive but lead to wrong conclusions:
 - **Jumping to a fix before reproducing.** You see suspicious code and want to change it immediately. The problem: without reproduction, you can't verify the fix actually addresses the symptom. You might fix a real issue that isn't *this* issue.
 - **Code reading as reproduction.** You read the code path and reason about what *should* happen. This feels like understanding, but it's theory — you haven't observed the actual behavior. Bugs live in the gap between what the code *should* do and what it *does*.
 - **Broad exploration before examining evidence.** You start grepping the codebase for related code. But you don't yet know what "related" means — the symptom hasn't been pinned down. Start from the concrete evidence (outputs, errors, logs), then follow the trail.
-- **Blaming the first suspect.** You find code that looks wrong and assume it's the cause. Correlation isn't causation — prove it with a failing test before changing anything.
+- **Blaming the first suspect.** You find code that looks wrong and assume it's the cause. Correlation isn't causation — prove it with a failing test before changing anything. A missing field in one model doesn't mean the data doesn't arrive through another path. A function that doesn't handle X doesn't mean X isn't handled elsewhere in the flow.
+- **Diagnosing without tracing the full flow.** You spot a "smoking gun" (a missing field, a skipped validation) and declare it the root cause. But you haven't traced the complete data flow end-to-end. The data might arrive through an indirect path you haven't examined yet. Always trace from input to output through every layer before concluding.
 - **Unit tests without integration coverage.** You write a focused unit test for the fix, but the actual bug path involves multiple components interacting. The unit test passes, but the bug can still recur through a different code path.
 
 ## Input
@@ -67,6 +68,16 @@ Run the current (unfixed) code with the user's inputs and verify that:
 
 **Detecting how to run the code:** If you don't already know how to run the project, check for `AGENTS.md`/`CLAUDE.md`, `Makefile`, `package.json` (scripts section), `pyproject.toml`, `build.sbt`, `Cargo.toml`, or similar. Look for a test runner, a dev server command, or a CLI entry point. If nothing is obvious, ask the user.
 
+**Choose the lightest reproduction level that proves the bug.** Don't spin up a full stack if a unit test or a targeted integration test can demonstrate the symptom. Prefer, in order:
+1. An existing test that can be tweaked to expose the bug
+2. A new focused test (unit or integration) that exercises the bug path
+3. A local run of the affected component in isolation
+4. A full E2E run with all dependencies (DB, external services, etc.) — only if simpler levels can't demonstrate the symptom
+
+If you find yourself setting up infrastructure (databases, servers, external services) before you've even identified the code path, you're probably overcomplicating the reproduction. Ask the user before investing in heavy setup.
+
+**Data safety.** When working with databases, credentials, tokens, or API keys — especially in local environments that may contain production data (dumps, migrations from prod) — verify with the user whether the data is real before using it. Create test data instead of using existing records.
+
 **If reproduction fails:** Don't skip ahead. Possible paths:
 - Ask the user for more specific reproduction steps or environment details
 - Check if the bug is environment-dependent (OS, runtime version, configuration)
@@ -84,9 +95,10 @@ Goal: find the root cause and apply a minimal, tested fix. Don't start this phas
 
 Starting from the concrete evidence gathered in Phase 1 (the reproduction output, the exact symptom), work backwards through the code:
 
-1. Follow one hypothesis at a time — don't juggle multiple theories in parallel
-2. For each hypothesis, look for evidence that confirms OR contradicts it
-3. When you find the root cause, explain:
+1. **Trace the full data flow first.** Before forming any hypothesis, map how the data moves end-to-end through the system for the affected operation. Follow the complete path from input to output, through every layer, transformation, and handoff. This prevents you from fixating on the first anomaly you spot — a missing field in one place might be provided by another path entirely.
+2. Follow one hypothesis at a time — don't juggle multiple theories in parallel
+3. For each hypothesis, look for evidence that confirms OR contradicts it. Actively look for ways your hypothesis could be wrong — don't just collect confirming evidence.
+4. When you find the root cause, explain:
    - What the code does wrong
    - Why it fails for the broken case but works for other cases (if applicable)
    - What the fix should be (conceptually, before writing code)
