@@ -88,27 +88,40 @@ Iterate with the user in plan mode until the plan is approved. When the user app
 ## Step 4 — Scaffold (apply)
 
 The user has approved the plan. Create all files as planned.
-2. Ensure everything works: the project should be in a state where `install → lint → test → build` succeeds with zero errors (even if there's no real code yet — use placeholder tests or hello-world entry points as needed).
-3. **Handle `AGENTS.md`**:
-   - If it **does not exist**: create it with the standard header (`<!-- CLAUDE.md e GEMINI.md sono symlink a questo file (AGENTS.md) -->`) and a section referencing `docs/tech-stack.md` for tech stack details and development workflow. Create `CLAUDE.md` and `GEMINI.md` as symlinks to `AGENTS.md`.
-   - If it **already exists**: add a section referencing `docs/tech-stack.md` if not already mentioned. Do not modify existing content. Do not touch existing symlinks.
-4. **Inform the user** that finalization will optionally create a git commit. Let them choose.
-5. If the user opts for a commit, stage all new files and commit.
 
-## Step 5 — Simplify
+### File creation
 
-After the scaffold is working (install + lint + test pass), run `/simplify` to review the scaffolded code for reuse opportunities, quality issues, and unnecessary complexity. Fix any issues found before proceeding.
+Use the **Write tool** for every source and config file. Do not use Bash heredocs — they cause escaping issues (e.g., `!` becomes `\!` in zsh) that break builds silently. Reserve Bash for commands only: `mkdir -p`, `ln -s`, `chmod`, package installs, etc.
 
-## Step 6 — Post-Scaffold Review
+### Format and verify
 
-After simplification, review what you learned during implementation:
+After creating all files, run the ecosystem's formatter/fixer (e.g., `biome check --write .`, `prettier --write .`, `ruff format .`) **before** running the verification step. Scaffolded files won't match the formatter's style on the first pass — auto-fix them now so the check step passes cleanly.
 
-- **Implicit dependencies**: packages not mentioned in the tech stack but required at runtime (e.g., Node.js server adapters, polyfills, CSS toolchain plugins)
+Then verify the project works end-to-end: `install → format → lint → test → build` should all succeed with zero errors (use placeholder tests or hello-world entry points as needed).
+
+### AGENTS.md
+
+AGENTS.md should only **point to** `docs/tech-stack.md` — not duplicate its content. All conventions, tool choices, and workflow details belong in the tech stack document. AGENTS.md is a routing table, not a summary.
+
+- If it **does not exist**: create it with the standard header (`<!-- CLAUDE.md e GEMINI.md sono symlink a questo file (AGENTS.md) -->`) and a short section that references `docs/tech-stack.md` for tech stack, conventions, and development workflow (e.g., "See `docs/tech-stack.md` for tech stack, conventions, and dev commands."). Do not repeat conventions here. Create `CLAUDE.md` and `GEMINI.md` as symlinks to `AGENTS.md`.
+- If it **already exists**: add a one-line reference to `docs/tech-stack.md` if not already mentioned. Do not duplicate content. Do not touch existing symlinks.
+
+### Finalize
+
+Inform the user that finalization will optionally create a git commit. Let them choose. If the user opts for a commit, stage all new files and commit.
+
+## Step 5 — Simplify and Review
+
+After the scaffold is working (install + lint + test pass), run `/simplify` to review the scaffolded code for reuse opportunities, quality issues, and unnecessary complexity. Fix any issues found.
+
+Then review what you learned during scaffolding and simplification. Look for things that aren't obvious from the tech stack doc but matter for anyone working on the project:
+
+- **Implicit dependencies**: packages not in the tech stack but required at runtime (e.g., server adapters, polyfills, CSS toolchain plugins)
 - **Configuration quirks**: non-obvious settings required by the package manager, build tool, or runtime (e.g., build script whitelists, plugin registration order)
 - **Testability patterns**: architectural choices made for testability (e.g., separating app definition from server startup) that affect how new code should be structured
 - **Version-specific behavior**: if a major version of a tool changed its API or conventions from what's commonly documented (e.g., Tailwind v4 directives differ from v3)
 
-Update `docs/tech-stack.md` with any findings that would be useful for someone (human or agent) working on the project. Keep updates concise and integrated into the existing sections — don't create a separate "scaffold notes" section.
+Update `docs/tech-stack.md` with any findings. Keep updates concise and integrated into existing sections — don't create a separate "scaffold notes" section.
 
 ## Language
 
