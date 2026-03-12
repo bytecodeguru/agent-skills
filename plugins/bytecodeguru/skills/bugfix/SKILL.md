@@ -107,15 +107,17 @@ Starting from the concrete evidence gathered in Phase 1 (the reproduction output
 
 ### Step 5 — Red-green fix
 
-Now apply the fix using a test-first approach:
+The order here matters and is strict: **test first, then fix.** The reason: a test that has never been seen failing proves nothing — it might pass for the wrong reason, or test the wrong thing entirely. Seeing it fail against the unfixed code is what gives confidence that the test actually captures the bug.
 
-1. **Red:** Write a test that captures the bug. This test must fail with the current code and demonstrate the exact symptom. Run it, confirm it fails.
-2. **Green:** Apply the minimal change needed to fix the root cause. Change only what's necessary — resist the urge to refactor nearby code.
-3. **Verify:** Run the failing test again — it should now pass.
+**Do not write or apply the fix before the test exists and has been seen failing.** If you already identified the fix conceptually in Step 4, hold that thought — write the test first, run it against the current (broken) code, confirm it fails, and only then apply the fix.
+
+1. **Red:** Write a test that captures the bug. Run it against the **current unfixed code**. It must fail. If it passes, the test doesn't capture the bug — rewrite it.
+2. **Green:** Now apply the minimal change needed to fix the root cause. Change only what's necessary — resist the urge to refactor nearby code.
+3. **Verify:** Run the test again — it should now pass. Show the user both results (red and green) so the before/after is clear.
 
 If the project has no test infrastructure, or the bug isn't practical to capture in an automated test, skip the test and apply the fix directly — but note this to the user as a gap.
 
-**Checkpoint.** Present what you changed and the test results. Wait for user confirmation before proceeding to Phase 3.
+**Checkpoint.** Present what you changed, the red result, and the green result. Wait for user confirmation before proceeding to Phase 3.
 
 ---
 
