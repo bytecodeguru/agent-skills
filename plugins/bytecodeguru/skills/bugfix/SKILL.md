@@ -26,6 +26,7 @@ These are patterns that feel productive but lead to wrong conclusions:
 - **Blaming the first suspect.** You find code that looks wrong and assume it's the cause. Correlation isn't causation — prove it with a failing test before changing anything. A missing field in one model doesn't mean the data doesn't arrive through another path. A function that doesn't handle X doesn't mean X isn't handled elsewhere in the flow.
 - **Diagnosing without tracing the full flow.** You spot a "smoking gun" (a missing field, a skipped validation) and declare it the root cause. But you haven't traced the complete data flow end-to-end. The data might arrive through an indirect path you haven't examined yet. Always trace from input to output through every layer before concluding.
 - **Unit tests without integration coverage.** You write a focused unit test for the fix, but the actual bug path involves multiple components interacting. The unit test passes, but the bug can still recur through a different code path.
+- **Tests that pass for the wrong reason.** You write a test that you expect to demonstrate the bug, but it passes against the unfixed code. This means the test doesn't capture the bug — it's testing something else. Don't count it as evidence. Rewrite it to target the actual broken behavior, or accept that the test isn't covering what you think it is.
 
 ## Input
 
@@ -68,13 +69,18 @@ Run the current (unfixed) code with the user's inputs and verify that:
 
 **Detecting how to run the code:** If you don't already know how to run the project, check for `AGENTS.md`/`CLAUDE.md`, `Makefile`, `package.json` (scripts section), `pyproject.toml`, `build.sbt`, `Cargo.toml`, or similar. Look for a test runner, a dev server command, or a CLI entry point. If nothing is obvious, ask the user.
 
-**Choose the lightest reproduction level that proves the bug.** Don't spin up a full stack if a unit test or a targeted integration test can demonstrate the symptom. Prefer, in order:
-1. An existing test that can be tweaked to expose the bug
-2. A new focused test (unit or integration) that exercises the bug path
-3. A local run of the affected component in isolation
-4. A full E2E run with all dependencies (DB, external services, etc.) — only if simpler levels can't demonstrate the symptom
+**Choose the reproduction level that actually proves the bug — not just the lightest one.** The goal is to observe the symptom in a form that's faithful to how it manifests in the real system. A lighter reproduction is better when it captures the same phenomenon; but if the bug is about data flowing through multiple layers (input → transformation → persistence → output), a unit test that exercises one layer in isolation may not show the actual symptom. Consider:
 
-If you find yourself setting up infrastructure (databases, servers, external services) before you've even identified the code path, you're probably overcomplicating the reproduction. Ask the user before investing in heavy setup.
+1. **What is the symptom?** If it's "wrong data in the DB" or "wrong value in the API response", you need to observe the data at that layer — not just test the function that transforms it.
+2. **Where does the corruption happen?** If the bug is in the interaction between components (e.g., a library reads data one way, the app stores it another way), a unit test for the library alone won't reproduce the issue.
+
+With that in mind, prefer in order:
+1. An existing test that can be tweaked to expose the bug
+2. A new focused test (unit or integration) that exercises the bug path — but only if the bug path is contained within a single layer
+3. A local run of the affected component in isolation
+4. A full E2E run with all dependencies (DB, external services, etc.)
+
+If you're unsure whether a lighter level will capture the real symptom, ask the user. They often have intuition about where the bug lives. If you find yourself setting up infrastructure (databases, servers, external services) before you've even identified the code path, you're probably overcomplicating the reproduction — ask before investing in heavy setup.
 
 **Data safety.** When working with databases, credentials, tokens, or API keys — especially in local environments that may contain production data (dumps, migrations from prod) — verify with the user whether the data is real before using it. Create test data instead of using existing records.
 
@@ -111,9 +117,22 @@ The order here matters and is strict: **test first, then fix.** The reason: a te
 
 **Do not write or apply the fix before the test exists and has been seen failing.** If you already identified the fix conceptually in Step 4, hold that thought — write the test first, run it against the current (broken) code, confirm it fails, and only then apply the fix.
 
-1. **Red:** Write a test that captures the bug. Run it against the **current unfixed code**. It must fail. If it passes, the test doesn't capture the bug — rewrite it.
+#### What makes a good regression test
+
+The test should capture the **behavior** that was broken, not just the **presence of a configuration or property**. The difference matters for long-term value:
+
+- **Behavioral test**: exercises the actual code path that was broken, feeds it the same kind of input that triggered the bug, and asserts on the output. If someone refactors the fix (changes the implementation but preserves the behavior), the test still passes. If someone breaks the behavior through any means, the test catches it.
+- **Structural test**: checks that a specific property, flag, or configuration value exists. It protects against someone deleting the exact line of the fix, but it doesn't protect against other paths that could reintroduce the same symptom. It also breaks on legitimate refactors that change the structure without changing the behavior.
+
+Prefer behavioral tests. A structural test is acceptable only when the behavioral path is impractical to test (e.g., the behavior requires infrastructure that can't run in the test suite), and in that case, acknowledge the limitation to the user.
+
+#### The red-green sequence
+
+1. **Red:** Write a test that captures the bug. Run it against the **current unfixed code**. It must fail — and it must fail **because of the bug**, not for some other reason (missing import, wrong test setup, unrelated error). If it passes, the test doesn't capture the bug — rewrite it. If it fails for the wrong reason, fix the test setup first.
 2. **Green:** Now apply the minimal change needed to fix the root cause. Change only what's necessary — resist the urge to refactor nearby code.
 3. **Verify:** Run the test again — it should now pass. Show the user both results (red and green) so the before/after is clear.
+
+Both the red and green phases require **actual execution** — running the test and showing the output. Reasoning about what "would" happen is not verification. The whole point of red-green is to build empirical evidence, not logical arguments.
 
 If the project has no test infrastructure, or the bug isn't practical to capture in an automated test, skip the test and apply the fix directly — but note this to the user as a gap.
 
